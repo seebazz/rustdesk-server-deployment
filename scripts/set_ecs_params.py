@@ -24,7 +24,6 @@ services = stack["run_params"]["network_configuration"]
 services["awsvpc_configuration"]["subnets"] = [subnet_a, subnet_b]
 services["awsvpc_configuration"]["security_groups"] = [security_group]
 
-
 with open(output_file, "w") as out_file:
     yaml.dump(stack, out_file, default_flow_style=False)
 

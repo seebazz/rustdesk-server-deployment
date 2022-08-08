@@ -1,0 +1,161 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  This template deploys an Application Load Balancer that exposes our various ECS services.
+  We create them in a separate nested template, so it can be referenced by all of the other nested templates.
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+  
+  TargetEC2Instance:
+    Description: An EC2 instance to register with target groups
+    Type: AWS::EC2::Instance::Id
+  
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Description: Choose which VPC the Application Load Balancer should be deployed to
+
+  Subnets:
+    Description: Choose which subnets the Application Load Balancer should be deployed to
+    Type: List<AWS::EC2::Subnet::Id>
+
+
+Resources:
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Ref EnvironmentName
+      Subnets: [!Ref Subnets]
+      Type: network
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+
+  HbbsListener1:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 21115
+      Protocol: TCP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref HbbsTarget1
+  HbbsListener2:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 21116
+      Protocol: TCP_UDP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref HbbsTarget2
+  HbbrListener1:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 21117
+      Protocol: TCP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref HbbrTarget1
+  HbbsListener3:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 21118
+      Protocol: TCP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref HbbsTarget3
+  HbbrListener2:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 21119
+      Protocol: TCP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref HbbrTarget2
+
+  # We define target groups here, as this is a mandatory Parameters
+  # when creating an Network Load Balancer Listener.
+  HbbsTarget1:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${EnvironmentName}-21115
+      TargetType: instance
+      Targets:
+        - Id: !Ref TargetEC2Instance
+          Port: 21115
+      VpcId: !Ref VPC
+      Port: 21115
+      Protocol: TCP
+  HbbsTarget2:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${EnvironmentName}-21116
+      TargetType: instance
+      Targets:
+        - Id: !Ref TargetEC2Instance
+          Port: 21116
+      VpcId: !Ref VPC
+      Port: 21116
+      Protocol: TCP_UDP
+  HbbrTarget1:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${EnvironmentName}-21117
+      TargetType: instance
+      Targets:
+        - Id: !Ref TargetEC2Instance
+          Port: 21117
+      VpcId: !Ref VPC
+      Port: 21117
+      Protocol: TCP
+  HbbsTarget3:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${EnvironmentName}-21118
+      TargetType: instance
+      Targets:
+        - Id: !Ref TargetEC2Instance
+          Port: 21118
+      VpcId: !Ref VPC
+      Port: 21118
+      Protocol: TCP
+  HbbrTarget2:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${EnvironmentName}-21119
+      TargetType: instance
+      Targets:
+        - Id: !Ref TargetEC2Instance
+          Port: 21119
+      VpcId: !Ref VPC
+      Port: 21119
+      Protocol: TCP
+
+Outputs:
+  LoadBalancer:
+    Description: A reference to the Application Load Balancer
+    Value: !Ref LoadBalancer
+
+  LoadBalancerUrl:
+    Description: The URL of the ALB
+    Value: !GetAtt LoadBalancer.DNSName
+
+  HbbsListener1:
+    Description: A reference to a port 21115 listener
+    Value: !Ref HbbsListener1
+  HbbsListener2:
+    Description: A reference to a port 21116 listener
+    Value: !Ref HbbsListener2
+  HbbrListener1:
+    Description: A reference to a port 21117 listener
+    Value: !Ref HbbrListener1
+  HbbsListener3:
+    Description: A reference to a port 21118 listener
+    Value: !Ref HbbsListener3
+  HbbrListener2:
+    Description: A reference to a port 21119 listener
+    Value: !Ref HbbrListener2

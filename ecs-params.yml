@@ -1,15 +1,15 @@
 version: 1
 task_definition:
-  task_execution_role: ecsRainbowtextTaskExecutionRole
-  ecs_network_mode: awsvpc
+  task_execution_role: RustDesk-Server
+  ecs_network_mode: bridge
   task_size:
     mem_limit: 0.5GB
     cpu_limit: 256
   services:
-    server:
+    hbbs:
       essential: true
-    nginx:
-      essential: false
+    hbbr:
+      essential: true
 run_params:
   network_configuration:
     awsvpc_configuration:
@@ -18,4 +18,4 @@ run_params:
         - "subnet ID 2"
       security_groups:
         - "security group ID"
-      assign_public_ip: ENABLED
+      assign_public_ip: DISABLED

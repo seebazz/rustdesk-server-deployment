@@ -8,12 +8,12 @@ REGION = os.getenv('AWS_REGION', 'your_aws_region')
 PROJECT = os.getenv('AWS_PROJECT', 'your_aws_region')
 
 # use if repository exist
-SERVER_REPOSITORY_URI = f'{ID}.dkr.ecr.{REGION}.amazonaws.com/{PROJECT}_server'
-NGINX_REPOSITORY_URI = f'{ID}.dkr.ecr.{REGION}.amazonaws.com/{PROJECT}_nginx'
+HBBS_REPOSITORY_URI = f'{ID}.dkr.ecr.{REGION}.amazonaws.com/{PROJECT}_hbbs'
+HBBR_REPOSITORY_URI = f'{ID}.dkr.ecr.{REGION}.amazonaws.com/{PROJECT}_hbbr'
 
 ECR_REPO_OBJ = {
-    f"{PROJECT}_server": SERVER_REPOSITORY_URI,
-    f"{PROJECT}_nginx": NGINX_REPOSITORY_URI
+    f"{PROJECT}_hbbs": HBBS_REPOSITORY_URI,
+    f"{PROJECT}_hbbr": HBBR_REPOSITORY_URI
 }
 
 for key, value in ECR_REPO_OBJ.items():

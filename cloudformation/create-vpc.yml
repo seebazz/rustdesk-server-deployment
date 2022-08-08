@@ -1,0 +1,320 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  This template deploys a VPC, with a pair of public and private subnets spread 
+  across two Availabilty Zones. It deploys an Internet Gateway, with a default 
+  route on the public subnets. It deploys a pair of NAT Gateways (one in each
+  AZ),  and default routes for them in the private subnets.
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+  VpcCIDR:
+    Description: Please enter the IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 10.192.0.0/16
+  PublicSubnet1CIDR:
+    Description: >-
+      Please enter the IP range (CIDR notation) for the public subnet in the
+      first Availability Zone
+    Type: String
+    Default: 10.192.10.0/24
+  PublicSubnet2CIDR:
+    Description: >-
+      Please enter the IP range (CIDR notation) for the public subnet in the
+      second Availability Zone
+    Type: String
+    Default: 10.192.11.0/24
+  PrivateSubnet1CIDR:
+    Description: >-
+      Please enter the IP range (CIDR notation) for the private subnet in the
+      first Availability Zone
+    Type: String
+    Default: 10.192.20.0/24
+  PrivateSubnet2CIDR:
+    Description: >-
+      Please enter the IP range (CIDR notation) for the private subnet in the
+      second Availability Zone
+    Type: String
+    Default: 10.192.21.0/24
+Resources:
+  VPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 771adf71-780b-4698-9ae5-3f29ac1ac393
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 2be88297-bced-481d-bd83-977fa7649031
+  InternetGatewayAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 688ae056-9f48-4636-9c9b-f376d6644d0d
+  PublicSubnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select 
+        - 0
+        - !GetAZs ''
+      CidrBlock: !Ref PublicSubnet1CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Public Subnet (AZ1)'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: b691059a-a546-46fa-9d4e-c00f8491a6d0
+  PublicSubnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select 
+        - 1
+        - !GetAZs ''
+      CidrBlock: !Ref PublicSubnet2CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Public Subnet (AZ2)'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: edea870b-1631-48af-9f27-578c3dbe0f56
+  PrivateSubnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select 
+        - 0
+        - !GetAZs ''
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Private Subnet (AZ1)'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 3c27be49-da7a-4221-926a-e8acb8495990
+  PrivateSubnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select 
+        - 1
+        - !GetAZs ''
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Private Subnet (AZ2)'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: a464f158-8027-417a-bb36-599f27f85e9a
+  PublicRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Public Routes'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 914eaf56-8103-4c47-8edb-e7101d37c56c
+  DefaultPublicRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: ac627062-6ce5-4c88-a619-f72eaffddfd8
+  PublicSubnet1RouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+  PublicSubnet2RouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+  PrivateRouteTable1:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Private Routes (AZ1)'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 3f93e78e-47e5-4924-a6e4-25be3933dfff
+  PrivateSubnet1RouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref PrivateSubnet1
+  PrivateRouteTable2:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Private Routes (AZ2)'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: b344bb13-89a6-40cd-9854-3236390b1966
+  PrivateSubnet2RouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      SubnetId: !Ref PrivateSubnet2
+Outputs:
+  VPC:
+    Description: A reference to the created VPC
+    Value: !Ref VPC
+  PublicSubnets:
+    Description: A list of the public subnets
+    Value: !Join 
+      - ','
+      - - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+  PrivateSubnets:
+    Description: A list of the private subnets
+    Value: !Join 
+      - ','
+      - - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+  PublicSubnet1:
+    Description: A reference to the public subnet in the 1st Availability Zone
+    Value: !Ref PublicSubnet1
+  PublicSubnet2:
+    Description: A reference to the public subnet in the 2nd Availability Zone
+    Value: !Ref PublicSubnet2
+  PrivateSubnet1:
+    Description: A reference to the private subnet in the 1st Availability Zone
+    Value: !Ref PrivateSubnet1
+  PrivateSubnet2:
+    Description: A reference to the private subnet in the 2nd Availability Zone
+    Value: !Ref PrivateSubnet2
+Metadata:
+  'AWS::CloudFormation::Designer':
+    2be88297-bced-481d-bd83-977fa7649031:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 60
+        'y': 690
+      z: 1
+      embeds: []
+    771adf71-780b-4698-9ae5-3f29ac1ac393:
+      size:
+        width: 150
+        height: 150
+      position:
+        x: 570
+        'y': 600
+      z: 1
+      embeds: []
+    b344bb13-89a6-40cd-9854-3236390b1966:
+      size:
+        width: 240
+        height: 240
+      position:
+        x: 60
+        'y': 390
+      z: 1
+      embeds: []
+    3f93e78e-47e5-4924-a6e4-25be3933dfff:
+      size:
+        width: 240
+        height: 240
+      position:
+        x: 360
+        'y': 90
+      z: 1
+      embeds: []
+    914eaf56-8103-4c47-8edb-e7101d37c56c:
+      size:
+        width: 240
+        height: 240
+      position:
+        x: 60
+        'y': 90
+      z: 1
+      embeds:
+        - ac627062-6ce5-4c88-a619-f72eaffddfd8
+    a464f158-8027-417a-bb36-599f27f85e9a:
+      size:
+        width: 150
+        height: 150
+      position:
+        x: 360
+        'y': 600
+      z: 1
+      embeds: []
+    3c27be49-da7a-4221-926a-e8acb8495990:
+      size:
+        width: 150
+        height: 150
+      position:
+        x: 660
+        'y': 90
+      z: 1
+      embeds: []
+    edea870b-1631-48af-9f27-578c3dbe0f56:
+      size:
+        width: 150
+        height: 150
+      position:
+        x: 570
+        'y': 390
+      z: 1
+      embeds: []
+    b691059a-a546-46fa-9d4e-c00f8491a6d0:
+      size:
+        width: 150
+        height: 150
+      position:
+        x: 360
+        'y': 390
+      z: 1
+      embeds: []
+    688ae056-9f48-4636-9c9b-f376d6644d0d:
+      source:
+        id: 771adf71-780b-4698-9ae5-3f29ac1ac393
+      target:
+        id: 2be88297-bced-481d-bd83-977fa7649031
+    ac627062-6ce5-4c88-a619-f72eaffddfd8:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 90
+        'y': 150
+      z: 2
+      parent: 914eaf56-8103-4c47-8edb-e7101d37c56c
+      embeds: []
+      isassociatedwith:
+        - 2be88297-bced-481d-bd83-977fa7649031
+      iscontainedinside:
+        - 914eaf56-8103-4c47-8edb-e7101d37c56c
+      dependson:
+        - 688ae056-9f48-4636-9c9b-f376d6644d0d

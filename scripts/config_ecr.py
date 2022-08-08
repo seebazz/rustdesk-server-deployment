@@ -13,12 +13,12 @@ REGION = os.getenv('AWS_REGION', 'your_aws_region')
 PROJECT = os.getenv('AWS_PROJECT', 'your_aws_project')
 
 # use if repository exist
-SERVER_REPOSITORY_URI = f'{ID}.dkr.ecr.{REGION}.amazonaws.com/{PROJECT}_server'
-NGINX_REPOSITORY_URI = f'{ID}.dkr.ecr.{REGION}.amazonaws.com/{PROJECT}_nginx'
+HBBS_REPOSITORY_URI = f'{ID}.dkr.ecr.{REGION}.amazonaws.com/{PROJECT}_hbbs'
+HBBR_REPOSITORY_URI = f'{ID}.dkr.ecr.{REGION}.amazonaws.com/{PROJECT}_hbbr'
 
 ECR_REPO_OBJ = {
-    f"{PROJECT}_server": SERVER_REPOSITORY_URI,
-    f"{PROJECT}_nginx": NGINX_REPOSITORY_URI
+    f"{PROJECT}_hbbs": HBBS_REPOSITORY_URI,
+    f"{PROJECT}_hbbr": HBBR_REPOSITORY_URI
 }
 
 push_operations = dict()
@@ -110,22 +110,22 @@ def update_services(ecr_repo_obj=None):
         ecr_repo_obj = ECR_REPO_OBJ
 
     for service_name, service in services.items():
-        if service_name == "server":
+        if service_name == "hbbs":
             service["logging"] = {
                 'driver': 'awslogs',
                 'options': {
                     'awslogs-group': f"{PROJECT}",
                     'awslogs-region': f"{REGION}",
-                    'awslogs-stream-prefix': f'{PROJECT}-server'
+                    'awslogs-stream-prefix': f'{PROJECT}-hbbs'
                     }
                 }
-        if service_name == "nginx":
+        if service_name == "hbbr":
             service["logging"] = {
                 'driver': 'awslogs',
                 'options': {
                     'awslogs-group': f"{PROJECT}",
                     'awslogs-region': f"{REGION}",
-                    'awslogs-stream-prefix': f'{PROJECT}-nginx'
+                    'awslogs-stream-prefix': f'{PROJECT}-hbbr'
                     }
                 }
         if "build" in service:

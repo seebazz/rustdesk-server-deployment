@@ -108,3 +108,7 @@ ecs-params.ecs.yml
 
 scripts/.env
 scripts/get_details.sh
+
+# Generated fron running docker-compose locally
+hbbr/
+hbbs/
